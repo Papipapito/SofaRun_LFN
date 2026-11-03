@@ -1,0 +1,5 @@
+/original/
+*.COM
+*.com
+__pycache__/
+*.pyc
