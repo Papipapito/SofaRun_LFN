@@ -1,10 +1,12 @@
 ; SRLFN: nombres largos (VFAT) en SofaRun 8.1 (SR.COM, de Louthrax)
 ;
-; La lista de ficheros de SofaRun ensena 31 caracteres del nombre largo (el 8.3 si no lo tiene) en una rejilla
-; de dos columnas de 40 (parchear.py cambia las constantes de la rejilla).
+; La lista de ficheros de SofaRun ensena 63 caracteres del nombre largo (el 8.3 si no lo tiene) en una sola
+; columna de 80 (con 80 columnas de pantalla; con 40 se queda como era). Las constantes de la rejilla se cambian
+; al empezar el modo de pantalla (3E54h): setlay, con la tabla de lay.inc que escribe parchear.py.
 ;
 ; Va detras del final de SR.COM (8971h): el parche mueve alli el principio del monton (parchear.py).
 ; Se desvian estos sitios:
+;   3E54h  LD A,(7DECh)           -> CALL setlay   (la pantalla ya tiene su ancho: la rejilla ancha o la de siempre)
 ;   0F86h  PUSH BC / PUSH IY      -> CALL mk       (el nombre que se pinta en cada celda de la lista)
 ;   0E58h  LD HL,(7451h)          -> CALL build    (acabada la lista y ordenada: la tabla de nombres)
 ;   0CD2h  PUSH DE / LD HL,(7455h)-> JP lfnfree    (se libera la lista: tambien la tabla)
@@ -14,7 +16,7 @@
 ; menor; y dentro de cada clase por el nombre). La rutina que pinta la pagina (0F0Eh) llama a 3FE9h con la cadena
 ; (que copia tal cual: el largo que se le da) y el indice de la entrada en (IX-14).
 ;
-; Solo lee. Acabada la lista, "build" hace una tabla de 32 bytes por entrada (31 caracteres y una marca) y la pasada
+; Solo lee. Acabada la lista, "build" hace una tabla de 64 bytes por entrada (63 caracteres y una marca) y la pasada
 ; recorre el directorio con _RDDRV (un sector cada vez), junta las entradas LFN de cada 8.3 (comprobando el orden y el
 ; checksum) y busca la entrada de la lista con una busqueda binaria por clase y nombre. Si no cabe en el monton (o
 ; algo falla) la lista se queda en 8.3.
@@ -35,9 +37,9 @@ _FFIRST         equ     40h
 _RDDRV          equ     73h
 _GETCLUS        equ     7Eh
 
-WIDTH           equ     31              ; caracteres que se pintan del nombre
-HEADW           equ     20              ; recortado: 20 + "..." + 8
-TAILW           equ     8
+WIDTH           equ     63              ; caracteres que se pintan del nombre (la entrada de la tabla es de 64 bytes)
+HEADW           equ     44              ; recortado: 44 + "..." + 16
+TAILW           equ     16
 LFNSEQ          equ     20              ; 20 partes x 13 = 260 caracteres
 SECSZ           equ     512
 FIBSZ           equ     64
@@ -47,7 +49,8 @@ MARGIN          equ     16              ; de sobra al pedir memoria
 
                 org     8971h
 
-lfntab:         dw      0               ; la tabla (32 bytes por entrada: 31 caracteres + marca), 0 = no hay
+wide:           db      0               ; 1: pantalla de 80 columnas y rejilla ancha
+lfntab:         dw      0               ; la tabla (64 bytes por entrada: 63 caracteres + marca), 0 = no hay
 nbuf:           ds      WIDTH+1,0       ; el nombre 8.3 de una entrada sin nombre largo, relleno con espacios
 keybuf:         ds      14,0            ; el 8.3 que se busca, como lo pone SofaRun ("NOMBRE.EXT")
 tabsz:          dw      0
@@ -74,13 +77,18 @@ eptr:           dw      0
 ; Estaba: PUSH BC (BC = el largo) / PUSH IY (la cadena). Ahora la cadena es la nuestra.
 mk:             pop     hl              ; la vuelta a 0F89h
                 push    bc
-                push    hl
+                ld      a,(wide)
+                or      a
+                jr      nz,mk1
+                push    iy              ; 40 columnas: lo de siempre
+                jp      (hl)
+mk1:            push    hl
                 call    getname         ; DE = lo que se pinta
                 pop     hl
                 push    de
                 jp      (hl)
 
-; DE = el nombre que se pinta para la entrada IY (indice en IX-14/IX-13): los 31 caracteres de la tabla, o el 8.3
+; DE = el nombre que se pinta para la entrada IY (indice en IX-14/IX-13): los 63 caracteres de la tabla, o el 8.3
 getname:        ld      hl,(lfntab)
                 ld      a,h
                 or      l
@@ -91,7 +99,8 @@ getname:        ld      hl,(lfntab)
                 add     hl,hl
                 add     hl,hl
                 add     hl,hl
-                add     hl,hl           ; indice x 32
+                add     hl,hl
+                add     hl,hl           ; indice x 64
                 ld      de,(lfntab)
                 add     hl,de           ; HL = &tabla[i]
                 ld      d,h
@@ -127,6 +136,9 @@ build:          push    af
                 push    de
                 push    ix
                 push    iy
+                ld      a,(wide)
+                or      a
+                jr      z,bx            ; 40 columnas: sin nombres largos
                 ld      hl,(COUNT)
                 ld      a,h
                 or      l
@@ -135,7 +147,8 @@ build:          push    af
                 add     hl,hl
                 add     hl,hl
                 add     hl,hl
-                add     hl,hl           ; x 32
+                add     hl,hl
+                add     hl,hl           ; x 64
                 ld      (tabsz),hl
                 ld      bc,MARGIN
                 add     hl,bc
@@ -185,6 +198,42 @@ bx:             pop     iy
                 pop     af
                 ld      hl,(SORTED)     ; lo que habia
                 ret
+
+; ---------------------------------------------------------------- 3E54h
+; La pantalla ya tiene su ancho (7DECh): con 80 columnas la rejilla ancha, con 40 la de siempre. Las constantes
+; de lay (direccion, de siempre, ancha) se escriben en el codigo de SofaRun. Estaba: LD A,(7DECh)
+setlay:         push    bc
+                push    de
+                push    hl
+                ld      a,(7DECh)
+                cp      50h
+                ld      a,0
+                jr      nz,sl0
+                inc     a
+sl0:            ld      (wide),a
+                ld      hl,lay
+                ld      b,LAYN
+sl1:            ld      e,(hl)
+                inc     hl
+                ld      d,(hl)
+                inc     hl
+                ld      c,(hl)          ; la de siempre
+                inc     hl
+                ld      a,(wide)
+                or      a
+                jr      z,sl2
+                ld      c,(hl)          ; la ancha
+sl2:            inc     hl
+                ld      a,c
+                ld      (de),a
+                djnz    sl1
+                pop     hl
+                pop     de
+                pop     bc
+                ld      a,(7DECh)       ; lo que habia
+                ret
+
+                include "lay.inc"       ; lay: dw direccion / db de_siempre, ancha ... (LAYN entradas)
 
 ; ---------------------------------------------------------------- 0CD2h
 ; Se libera la lista de entradas: tambien la tabla. Estaba: PUSH DE / LD HL,(ARRAY), y sigue en 0CD6h.
@@ -603,6 +652,7 @@ found:          ld      hl,(mid)
                 add     hl,hl
                 add     hl,hl
                 add     hl,hl
+                add     hl,hl           ; x 64
                 ld      de,(lfntab)
                 add     hl,de
                 ex      de,hl           ; DE = &tabla[mid]

@@ -104,6 +104,9 @@ def _ficheros():
 
 
 FICHEROS = _ficheros()
+# BENCH_EXTRA=N: N ficheros mas (nombre largo de unos 50 caracteres) para probar carpetas grandes
+FICHEROS = FICHEROS + [("Juego de prueba numero %04d - con un subtitulo bastante largo (1990)(Test).rom" % i, 1024 + i)
+                       for i in range(int(os.environ.get("BENCH_EXTRA", "0")))]
 
 # Contenido AMPLIADO (escenarios 'interaccion' y 'cs'; el escenario 'lista' sigue con el de siempre):
 #   \ROMS: ademas un .TXT de nombre largo y HOLA.COM (programa de prueba 8.3), la carpeta larga con 8 ficheros dentro

@@ -480,6 +480,11 @@ proc s_accion {a} {
 			debug set_bp $a {} [list tr_hit $a]
 			q_add_front s_wait 0
 		}
+		poke       {
+			poke [expr "0x[lindex $args 0]"] [expr "0x[lindex $args 1]"]
+			lg "POKE [lindex $args 0] <- [lindex $args 1]"
+			q_add_front s_wait 0
+		}
 		regs       {
 			lg [format "REGS PC=%04X SP=%04X AF=%04X BC=%04X DE=%04X HL=%04X IX=%04X IY=%04X" [reg PC] [reg SP] [reg AF] [reg BC] [reg DE] [reg HL] [reg IX] [reg IY]]
 			q_add_front s_wait 0
