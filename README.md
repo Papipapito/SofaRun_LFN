@@ -19,8 +19,9 @@ after:    Aleste 1 - Eleven Fighters (1988)(Compile).rom                        
 You need your own copy of the original `SR.COM` of SofaRun 8.1 (34,929 bytes, sha1
 `2f13bb7303d4cc4f9c0a54c084907e320777be22`). It is **not** included here. Pick any of these:
 
-1. **Web page, nothing to install:** open [`aplicar.html`](aplicar.html) in a browser and drop your `SR.COM` on it. It runs
-   in your browser; the file is not uploaded anywhere.
+1. **Web page, nothing to install:** open [the online patcher](https://papipapito.github.io/SofaRun_LFN/aplicar.html)
+   (or the downloaded [`aplicar.html`](aplicar.html)) in a browser and drop your `SR.COM` on it. It runs in your
+   browser; the file is not uploaded anywhere.
 2. **Python 3:** `python aplicar.py SR.COM` → writes `SR_LFN.COM` next to it.
 3. **Any IPS patcher** (Floating IPS, Lunar IPS…): apply [`SR_LFN.ips`](SR_LFN.ips) to `SR.COM`. IPS patchers do not check the
    source file, so check the sha1 above first.
