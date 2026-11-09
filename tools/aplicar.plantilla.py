@@ -4,7 +4,7 @@
   python aplicar.py SR.COM               ->  SR_LFN.COM, next to SR.COM / al lado de SR.COM
   python aplicar.py SR.COM -o OUT.COM
 
-Hace falta el SR.COM ORIGINAL de SofaRun 8.1, sin tocar / You need the ORIGINAL, untouched SofaRun 8.1 SR.COM:
+Hace falta el SR.COM ORIGINAL de SofaRun, sin tocar / You need the ORIGINAL, untouched SofaRun SR.COM:
   __LISTA__
 No hace falta nada mas que Python 3 / Nothing else is needed but Python 3.
 
@@ -16,8 +16,8 @@ import locale
 import os
 import sys
 
-# el SR.COM original y el parcheado
-BASE = __BASE__
+# sha1 del SR.COM original -> el parche (IPS) y lo que sale
+BASES = __BASES__
 
 try:
     locale.setlocale(locale.LC_ALL, "")
@@ -53,16 +53,16 @@ def aplicar_ips(datos, ips):
 
 
 def procesar(datos):
-    """Devuelve ('original', bytes nuevos), ('parcheado', None) u ('otro', None)."""
+    """Devuelve (estado, bytes nuevos, base): estado 'original' (con los bytes nuevos), 'parcheado' u 'otro'."""
     sha = hashlib.sha1(datos).hexdigest()
-    if sha == BASE["parcheado"]:
-        return "parcheado", None
-    if sha != BASE["original"]:
-        return "otro", None
-    nuevo = aplicar_ips(datos, base64.b64decode(BASE["ips"]))
-    if hashlib.sha1(nuevo).hexdigest() != BASE["parcheado"] or len(nuevo) != BASE["tam_parcheado"]:
+    base = BASES.get(sha)
+    if base is None:
+        ya = next((b for b in BASES.values() if b["parcheado"] == sha), None)
+        return ("parcheado" if ya else "otro"), None, ya
+    nuevo = aplicar_ips(datos, base64.b64decode(base["ips"]))
+    if hashlib.sha1(nuevo).hexdigest() != base["parcheado"] or len(nuevo) != base["tam_parcheado"]:
         raise RuntimeError(T("Error interno: el resultado no es el esperado.", "Internal error: unexpected result."))
-    return "original", nuevo
+    return "original", nuevo, base
 
 
 def main(argv):
@@ -80,16 +80,16 @@ def main(argv):
         datos = open(entrada, "rb").read()
     except OSError as e:
         sys.exit(T("No puedo leer %s: %s", "Cannot read %s: %s") % (entrada, e))
-    estado, nuevo = procesar(datos)
+    estado, nuevo, base = procesar(datos)
     if estado == "parcheado":
         sys.exit(T("%s ya lleva el parche de nombres largos.", "%s already has the long-name patch.") % entrada)
     if estado == "otro":
+        versiones = "\n    ".join("SofaRun %s: %d bytes, sha1 %s" % (b["nombre"], b["tam_original"], s) for s, b in BASES.items())
         sys.exit(T(
-            "%s no es el SR.COM original que conozco.\n  sha1 de tu fichero: %s\n  Vale: %s: %d bytes, sha1 %s\n"
-            "El parche solo vale para esa version exacta, sin tocar.",
-            "%s is not the original SR.COM I know.\n  your file's sha1: %s\n  This fits: %s: %d bytes, sha1 %s\n"
-            "The patch only fits that exact version, untouched.") % (
-                entrada, hashlib.sha1(datos).hexdigest(), BASE["nombre"], BASE["tam_original"], BASE["original"]))
+            "%s no es un SR.COM original que conozca.\n  sha1 de tu fichero: %s\n  Valen:\n    %s\n"
+            "El parche solo vale para esas versiones exactas, sin tocar.",
+            "%s is not an original SR.COM I know.\n  your file's sha1: %s\n  These fit:\n    %s\n"
+            "The patch only fits those exact versions, untouched.") % (entrada, hashlib.sha1(datos).hexdigest(), versiones))
     if salida is None:
         salida = os.path.join(os.path.dirname(os.path.abspath(entrada)), "SR_LFN.COM")
     if os.path.abspath(salida) == os.path.abspath(entrada):
@@ -97,7 +97,7 @@ def main(argv):
     with open(salida, "wb") as f:
         f.write(nuevo)
     print(T("SofaRun %s: hecho. %s (%d bytes, sha1 %s)", "SofaRun %s: done. %s (%d bytes, sha1 %s)")
-          % (BASE["nombre"], salida, len(nuevo), BASE["parcheado"]))
+          % (base["nombre"], salida, len(nuevo), base["parcheado"]))
     print(T("Copialo a la tarjeta como SR.COM, en la carpeta de SofaRun (junto a SR.INI).",
             "Copy it to the card as SR.COM, in the SofaRun folder (next to SR.INI)."))
 

@@ -50,8 +50,8 @@
 </main>
 <script>
 "use strict";
-// el SR.COM original y el parcheado: { nombre, original (sha1), tam_original, parcheado (sha1), tam_parcheado, ips (base64) }
-const BASE = __BASE__;
+// sha1 del SR.COM original -> { nombre, original (sha1), tam_original, parcheado (sha1), tam_parcheado, ips (base64) }
+const BASES = __BASES__;
 
 // ---- nucleo (sin DOM; lo prueba tests/probar.py con node) ----
 function sha1(bytes) {
@@ -82,8 +82,8 @@ function sha1(bytes) {
   return h.map(x => x.toString(16).padStart(8, "0")).join("");
 }
 
-function ipsBytes() {
-  const bin = atob(BASE.ips), out = new Uint8Array(bin.length);
+function ipsBytes(base) {
+  const bin = atob(base.ips), out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
@@ -108,14 +108,16 @@ function aplicarIps(datos, ips) {
   return out;
 }
 
-// { estado: "original" | "parcheado" | "otro", salida (Uint8Array | null), sha }
+// { estado: "original" | "parcheado" | "otro", salida (Uint8Array | null), sha, base }
 function procesar(datos) {
-  const sha = sha1(datos);
-  if (sha === BASE.parcheado) return { estado: "parcheado", salida: null, sha };
-  if (sha !== BASE.original) return { estado: "otro", salida: null, sha };
-  const salida = aplicarIps(datos, ipsBytes());
-  if (sha1(salida) !== BASE.parcheado || salida.length !== BASE.tam_parcheado) throw new Error("internal");
-  return { estado: "original", salida, sha };
+  const sha = sha1(datos), base = BASES[sha];
+  if (!base) {
+    const ya = Object.values(BASES).find(b => b.parcheado === sha) || null;
+    return { estado: ya ? "parcheado" : "otro", salida: null, sha, base: ya };
+  }
+  const salida = aplicarIps(datos, ipsBytes(base));
+  if (sha1(salida) !== base.parcheado || salida.length !== base.tam_parcheado) throw new Error("internal");
+  return { estado: "original", salida, sha, base };
 }
 
 // ---- pagina ----
@@ -123,23 +125,23 @@ if (typeof document !== "undefined") {
   const TXT = {
     es: {
       titulo: "Nombres largos para SofaRun",
-      sub: "Suelta el SR.COM original de SofaRun 8.1 y descarga el SR.COM con nombres largos en una columna. Todo ocurre en tu navegador: el fichero no se sube a ningún sitio.",
+      sub: "Suelta el SR.COM original de SofaRun (8.1) y descarga el SR.COM con nombres largos en una columna. Todo ocurre en tu navegador: el fichero no se sube a ningún sitio.",
       zona: "Suelta aquí tu SR.COM, o pulsa para elegirlo",
       pie: "Después copia el fichero resultante a la tarjeta como SR.COM, en la carpeta de SofaRun (junto a SR.INI). Necesita Nextor 2.1 o 3.0 y una pantalla de 80 columnas.",
-      version: "Versión admitida, sin tocar:",
-      ok: "Hecho", okMsg: "SofaRun 8.1: parche aplicado (%n bytes). Pulsa para descargar SR_LFN.COM.", descargar: "Descargar SR_LFN.COM",
-      ya: "Ya está parcheado", yaMsg: "Este SR.COM ya lleva el parche de nombres largos.",
-      mal: "No es el SR.COM original que conozco", malMsg: "Tu fichero tiene sha1 %s. El parche solo vale para SofaRun 8.1 sin tocar (abajo): no sirve otra versión ni un SR.COM ya modificado.",
+      version: "Versiones admitidas, sin tocar:",
+      ok: "Hecho", okMsg: "SofaRun %v: parche aplicado (%n bytes). Pulsa para descargar SR_LFN.COM.", descargar: "Descargar SR_LFN.COM",
+      ya: "Ya está parcheado", yaMsg: "Este SR.COM (SofaRun %v) ya lleva el parche de nombres largos.",
+      mal: "No es un SR.COM original que conozca", malMsg: "Tu fichero tiene sha1 %s. El parche solo vale para las versiones de abajo, sin tocar: no sirve otra versión ni un SR.COM ya modificado.",
     },
     en: {
       titulo: "Long file names for SofaRun",
-      sub: "Drop the original SofaRun 8.1 SR.COM and download the SR.COM with long file names in one column. Everything happens in your browser: the file is not uploaded anywhere.",
+      sub: "Drop the original SofaRun (8.1) SR.COM and download the SR.COM with long file names in one column. Everything happens in your browser: the file is not uploaded anywhere.",
       zona: "Drop your SR.COM here, or click to choose it",
       pie: "Then copy the result to the card as SR.COM, in the SofaRun folder (next to SR.INI). Needs Nextor 2.1 or 3.0 and an 80-column screen.",
-      version: "Supported version, untouched:",
-      ok: "Done", okMsg: "SofaRun 8.1: patch applied (%n bytes). Click to download SR_LFN.COM.", descargar: "Download SR_LFN.COM",
-      ya: "Already patched", yaMsg: "This SR.COM already has the long-name patch.",
-      mal: "Not the original SR.COM I know", malMsg: "Your file's sha1 is %s. The patch only fits SofaRun 8.1, untouched (below): another version or an already modified SR.COM will not do.",
+      version: "Supported versions, untouched:",
+      ok: "Done", okMsg: "SofaRun %v: patch applied (%n bytes). Click to download SR_LFN.COM.", descargar: "Download SR_LFN.COM",
+      ya: "Already patched", yaMsg: "This SR.COM (SofaRun %v) already has the long-name patch.",
+      mal: "Not an original SR.COM I know", malMsg: "Your file's sha1 is %s. The patch only fits the versions below, untouched: another version or an already modified SR.COM will not do.",
     },
   };
   const L = TXT[(navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en"];
@@ -149,10 +151,12 @@ if (typeof document !== "undefined") {
   document.getElementById("t-zona").textContent = L.zona;
   document.getElementById("t-pie").textContent = L.pie;
   document.getElementById("t-versiones").textContent = L.version;
-  const li = document.createElement("li"), c = document.createElement("code");
-  c.textContent = BASE.nombre + ": " + BASE.tam_original + " bytes, sha1 " + BASE.original;
-  li.append(c);
-  document.getElementById("lista-versiones").append(li);
+  for (const b of Object.values(BASES)) {
+    const li = document.createElement("li"), c = document.createElement("code");
+    c.textContent = "SofaRun " + b.nombre + ": " + b.tam_original + " bytes, sha1 " + b.original;
+    li.append(c);
+    document.getElementById("lista-versiones").append(li);
+  }
   const res = document.getElementById("resultado"), zona = document.getElementById("zona"),
         fich = document.getElementById("fichero");
 
@@ -167,7 +171,7 @@ if (typeof document !== "undefined") {
     const datos = new Uint8Array(await archivo.arrayBuffer());
     let r;
     try { r = procesar(datos); } catch (e) { return mostrar("mal", L.mal, "Internal error / Error interno"); }
-    if (r.estado === "parcheado") return mostrar("ok", L.ya, L.yaMsg);
+    if (r.estado === "parcheado") return mostrar("ok", L.ya, L.yaMsg.replace("%v", r.base.nombre));
     if (r.estado === "otro") return mostrar("mal", L.mal, L.malMsg.replace("%s", r.sha));
     const salida = r.salida, boton = document.createElement("button");
     boton.textContent = L.descargar;
@@ -178,7 +182,7 @@ if (typeof document !== "undefined") {
       document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     };
-    mostrar("ok", L.ok, L.okMsg.replace("%n", salida.length), boton);
+    mostrar("ok", L.ok, L.okMsg.replace("%v", r.base.nombre).replace("%n", salida.length), boton);
   }
 
   fich.addEventListener("change", () => fich.files[0] && procesarFichero(fich.files[0]));

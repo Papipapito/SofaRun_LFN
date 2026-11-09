@@ -1,6 +1,6 @@
 # SR_LFN — nombres largos para SofaRun (MSX)
 
-Parche no oficial que hace que **SofaRun 8.1** (`SR.COM`, de Louthrax) enseñe los **nombres largos** (VFAT, los que se
+Parche no oficial que hace que **SofaRun 8.1** (`SR.COM`, de Louthrax; las dos compilaciones, ver abajo) enseñe los **nombres largos** (VFAT, los que se
 ven en Windows) en **una sola columna**, en vez de `METALG~1.ROM` en cuatro columnas estrechas.
 [English version](README.md).
 
@@ -17,19 +17,27 @@ ahora:    Aleste 1 - Eleven Fighters (1988)(Compile).rom                        
 
 ## Cómo aplicarlo
 
-Hace falta tu propia copia del `SR.COM` original de SofaRun 8.1 (34.929 bytes, sha1
-`2f13bb7303d4cc4f9c0a54c084907e320777be22`). **No** va en este repositorio. Elige una de estas:
+Hace falta tu propia copia del `SR.COM` original. **No** va en este repositorio. SofaRun 8.1 existe en dos compilaciones
+que por dentro dicen «v8.1»; se distinguen por el tamaño de `SR.COM`:
+
+| Compilación | `SR.COM` | sha1 | Resultado |
+| --- | --- | --- | --- |
+| 8.1 | 34.929 bytes | `2f13bb7303d4cc4f9c0a54c084907e320777be22` | 36.242 bytes, `c2f56896a09bf856ec21ae842752cb8925aede71` |
+| 8.1, noviembre de 2025 (la del zip de la web de SofaRun) | 35.115 bytes | `2d95ca7d366f7ac87b299102e1b148692d934706` | 36.428 bytes, `0b3ff3bec96d550ce4902ea3830c95ace5499199` |
+
+Elige una de estas:
 
 1. **Página web, sin instalar nada:** abre [el aplicador en línea](https://papipapito.github.io/SofaRun_LFN/aplicar.html)
    (o el [`aplicar.html`](aplicar.html) descargado) en el navegador y suelta encima tu `SR.COM`. Todo ocurre en tu
    navegador: el fichero no se sube a ningún sitio.
 2. **Python 3:** `python aplicar.py SR.COM` → escribe `SR_LFN.COM` al lado.
-3. **Cualquier parcheador de IPS** (Floating IPS, Lunar IPS…): aplica [`SR_LFN.ips`](SR_LFN.ips) a `SR.COM`. Los
-   parcheadores de IPS no comprueban el fichero de origen: comprueba antes el sha1 de arriba.
+3. **Cualquier parcheador de IPS** (Floating IPS, Lunar IPS…): aplica [`SR_LFN.ips`](SR_LFN.ips) (34.929 bytes) o
+   [`SR_LFN_2025-11.ips`](SR_LFN_2025-11.ips) (35.115 bytes) a `SR.COM`. Los parcheadores de IPS no comprueban el fichero de
+   origen: comprueba antes el sha1 de arriba.
 
 Después copia el resultado a la tarjeta como `SR.COM`, en la carpeta de SofaRun (junto a `SR.INI`). `aplicar.py` y
-`aplicar.html` rechazan cualquier fichero que no sea exactamente el 8.1 original y comprueban el sha1 del resultado
-(36.242 bytes, `c2f56896a09bf856ec21ae842752cb8925aede71`).
+`aplicar.html` reconocen la compilación por el sha1, rechazan cualquier fichero que no sea exactamente uno de los originales de arriba y
+comprueban el sha1 del resultado.
 
 ## Requisitos y límites
 
@@ -41,17 +49,19 @@ Después copia el resultado a la tarjeta como `SR.COM`, en la carpeta de SofaRun
 - Solo ASCII: las letras latinas acentuadas salen sin acento y lo demás como `?`. El título del menú Game sigue
   enseñando el 8.3. El orden es el de siempre (por el 8.3). Dentro de un ZIP no cambia nada.
 - Entrar en una carpeta tarda algo más: se vuelve a leer para buscar los nombres largos.
-- Probado **solo en openMSX** (Philips NMS 8245, Sunrise IDE, Nextor 2.1.4, FAT16): listas de 25, 180 y 430 ficheros,
-  entrar y salir de carpetas, mover el cursor y el menú Game. No probado en hardware real, con Nextor 3.0, con ZIP ni con
-  una pantalla real de 40 columnas.
+- Probado **solo en openMSX** (Philips NMS 8245, Sunrise IDE, Nextor 2.1.4, FAT16): con la primera compilación, listas de
+  25, 180 y 430 ficheros, entrar y salir de carpetas, mover el cursor y el menú Game; con la de noviembre de 2025, la lista
+  de 25 ficheros y entrar y salir de una carpeta (su código de lista, dibujo y orden es el mismo, solo se movieron las
+  direcciones). No probado en hardware real, con Nextor 3.0, con ZIP ni con una pantalla real de 40 columnas.
 
 ## Reconstruirlo y probarlo
 
 El parche es Z80 escrito a mano (`src/srlfn.asm`) sobre el desensamblado del binario. Con
-[pasmo](http://pasmo.speccy.org/) (o WSL en Windows) y el original en `original/SR.COM`:
+[pasmo](http://pasmo.speccy.org/) (o WSL en Windows) y los originales en `original/` (`SR.COM` para la primera
+compilación, `SR_2025-11.COM` para la segunda):
 
 ```
-python tools/hacer_parche.py     # construye SR_LFN.ips, aplicar.py y aplicar.html
+python tools/hacer_parche.py     # construye los .ips, aplicar.py y aplicar.html
 python tests/probar.py           # prueba las tres formas de aplicarlo (node es opcional)
 ```
 

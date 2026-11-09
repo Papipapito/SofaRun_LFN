@@ -4,9 +4,11 @@
 ; columna de 80 (con 80 columnas de pantalla; con 40 se queda como era). Las constantes de la rejilla se cambian
 ; al empezar el modo de pantalla (3E54h): setlay, con la tabla de lay.inc que escribe parchear.py.
 ;
-; Va detras del final de SR.COM (8971h): el parche mueve alli el principio del monton (parchear.py).
+; Va detras del final de SR.COM (FIN): el parche mueve alli el principio del monton (parchear.py). Las direcciones
+; de lo que cambia de una version de SR.COM a otra (variables, malloc...) las escribe parchear.py en variante.inc.
 ; Se desvian estos sitios:
-;   3E54h  LD A,(7DECh)           -> CALL setlay   (la pantalla ya tiene su ancho: la rejilla ancha o la de siempre)
+;   3E54h  LD A,(ancho)           -> CALL setlay   (la pantalla ya tiene su ancho: la rejilla ancha o la de siempre;
+;                                                  3E5Dh en la version de 2025-11)
 ;   0F86h  PUSH BC / PUSH IY      -> CALL mk       (el nombre que se pinta en cada celda de la lista)
 ;   0E58h  LD HL,(7451h)          -> CALL build    (acabada la lista y ordenada: la tabla de nombres)
 ;   0CD2h  PUSH DE / LD HL,(7455h)-> JP lfnfree    (se libera la lista: tambien la tabla)
@@ -22,13 +24,15 @@
 ; algo falla) la lista se queda en 8.3.
 
 BDOS            equ     0005h
-MALLOC          equ     5BD6h           ; DE = bytes -> HL = puntero. Si no hay sitio SofaRun se acaba: antes MAXFREE
-FREE            equ     5CB4h           ; DE = puntero
-MAXFREE         equ     5FC3h           ; -> HL = el bloque libre mas grande, en bytes
-ARRAY           equ     7455h           ; puntero a la lista de entradas
-COUNT           equ     7D1Bh           ; numero de entradas
-SORTED          equ     7451h           ; lo que cargaba la instruccion de 0E58h
-PATHV           equ     7D1Dh           ; la ruta que se lista: "A:\ROMS\"
+                include "variante.inc"  ; FIN, MALLOC, FREE, MAXFREE, ARRAY, COUNT, SORTED, PATHV, WIDTHV (de la version de SR.COM)
+; MALLOC  DE = bytes -> HL = puntero. Si no hay sitio SofaRun se acaba: antes MAXFREE
+; FREE    DE = puntero
+; MAXFREE -> HL = el bloque libre mas grande, en bytes
+; ARRAY   puntero a la lista de entradas
+; COUNT   numero de entradas
+; SORTED  lo que cargaba la instruccion de 0E58h
+; PATHV   la ruta que se lista: "A:\ROMS\"
+; WIDTHV  el ancho de la pantalla en caracteres (80 o 40)
 
 _CURDRV         equ     19h
 _SETDTA         equ     1Ah
@@ -47,7 +51,7 @@ NOMSZ           equ     LFNSEQ*13+4
 TMPSZ           equ     SECSZ+FIBSZ+NOMSZ
 MARGIN          equ     16              ; de sobra al pedir memoria
 
-                org     8971h
+                org     FIN
 
 wide:           db      0               ; 1: pantalla de 80 columnas y rejilla ancha
 lfntab:         dw      0               ; la tabla (64 bytes por entrada: 63 caracteres + marca), 0 = no hay
@@ -200,12 +204,12 @@ bx:             pop     iy
                 ret
 
 ; ---------------------------------------------------------------- 3E54h
-; La pantalla ya tiene su ancho (7DECh): con 80 columnas la rejilla ancha, con 40 la de siempre. Las constantes
-; de lay (direccion, de siempre, ancha) se escriben en el codigo de SofaRun. Estaba: LD A,(7DECh)
+; La pantalla ya tiene su ancho (WIDTHV): con 80 columnas la rejilla ancha, con 40 la de siempre. Las constantes
+; de lay (direccion, de siempre, ancha) se escriben en el codigo de SofaRun. Estaba: LD A,(WIDTHV)
 setlay:         push    bc
                 push    de
                 push    hl
-                ld      a,(7DECh)
+                ld      a,(WIDTHV)
                 cp      50h
                 ld      a,0
                 jr      nz,sl0
@@ -230,7 +234,7 @@ sl2:            inc     hl
                 pop     hl
                 pop     de
                 pop     bc
-                ld      a,(7DECh)       ; lo que habia
+                ld      a,(WIDTHV)       ; lo que habia
                 ret
 
                 include "lay.inc"       ; lay: dw direccion / db de_siempre, ancha ... (LAYN entradas)

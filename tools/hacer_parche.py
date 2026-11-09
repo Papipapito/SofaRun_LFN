@@ -1,13 +1,16 @@
-"""hacer_parche.py — del SR.COM original de SofaRun 8.1 a todo lo que se reparte.
+"""hacer_parche.py — de los SR.COM originales de SofaRun a todo lo que se reparte.
 
 Uso:  python tools/hacer_parche.py
 
-Necesita original/SR.COM (SofaRun 8.1, 34.929 bytes, sha1 2f13bb73...: no va en el repositorio) y pasmo
-(http://pasmo.speccy.org/: en el PATH o, en Windows, dentro de WSL).
-1. Parchea con src/parchear.py (ensambla src/srlfn.asm).
-2. Saca de la diferencia el IPS (SR_LFN.ips): SOLO los bytes nuevos, ni un byte del original.
+Necesita los originales en original/ (no van en el repositorio) y pasmo (http://pasmo.speccy.org/: en el PATH o, en
+Windows, dentro de WSL):
+  original/SR.COM              SofaRun 8.1, 34.929 bytes, sha1 2f13bb73...        -> SR_LFN.ips
+  original/SR_2025-11.COM      SofaRun 8.1 de la web (2025-11), 35.115 bytes, sha1 2d95ca7d...  -> SR_LFN_2025-11.ips
+Para cada uno:
+1. Lo parchea con src/parchear.py (ensambla src/srlfn.asm).
+2. Saca de la diferencia el parche IPS: SOLO los bytes nuevos, ni un byte del original.
 3. Lo reaplica sobre el original y comprueba que sale el mismo fichero.
-Y escribe aplicar.py y aplicar.html (con el parche dentro).
+Y escribe aplicar.py y aplicar.html (con todos los parches dentro).
 """
 import base64
 import hashlib
@@ -19,8 +22,11 @@ import sys
 import tempfile
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORIGINAL = "original/SR.COM"
-SHA1 = "2f13bb7303d4cc4f9c0a54c084907e320777be22"
+BASES = [
+    dict(nombre="8.1", sha1="2f13bb7303d4cc4f9c0a54c084907e320777be22", ruta="original/SR.COM", ips="SR_LFN.ips"),
+    dict(nombre="8.1 (2025-11)", sha1="2d95ca7d366f7ac87b299102e1b148692d934706", ruta="original/SR_2025-11.COM",
+         ips="SR_LFN_2025-11.ips"),
+]
 
 
 def sha1(b):
@@ -73,11 +79,13 @@ def plantilla(nombre, **datos):
     return texto
 
 
-def main():
-    ruta = os.path.join(RAIZ, ORIGINAL)
+def hacer_base(base):
+    ruta = os.path.join(RAIZ, base["ruta"])
+    if not os.path.exists(ruta):
+        sys.exit("falta %s (el SR.COM %s original; no va en el repositorio)" % (base["ruta"], base["nombre"]))
     orig = open(ruta, "rb").read()
-    if sha1(orig) != SHA1:
-        sys.exit("%s no es el SR.COM de SofaRun 8.1 original (sha1 %s)" % (ruta, SHA1))
+    if sha1(orig) != base["sha1"]:
+        sys.exit("%s no es el SR.COM %s original (sha1 %s)" % (ruta, base["nombre"], base["sha1"]))
     with tempfile.TemporaryDirectory() as tmp:
         nuevo_ruta = os.path.join(tmp, "SR_LFN.COM")
         subprocess.run([sys.executable, os.path.join(RAIZ, "src", "parchear.py"), ruta, nuevo_ruta], check=True)
@@ -87,14 +95,20 @@ def main():
     for off, datos in trozos:           # nada del original dentro del parche
         for k, b in enumerate(datos):
             assert off + k >= len(orig) or orig[off + k] != b
-    open(os.path.join(RAIZ, "SR_LFN.ips"), "wb").write(ips)
-    print("SR_LFN.ips: %d bytes en %d trozos (%d bytes nuevos o cambiados de %d)"
-          % (len(ips), len(trozos), sum(len(d) for _, d in trozos), len(nuevo)))
-    print("   original  %d bytes sha1 %s" % (len(orig), SHA1))
+    open(os.path.join(RAIZ, base["ips"]), "wb").write(ips)
+    print("%s: %s %d bytes en %d trozos (%d bytes nuevos o cambiados de %d)"
+          % (base["nombre"], base["ips"], len(ips), len(trozos), sum(len(d) for _, d in trozos), len(nuevo)))
+    print("   original  %d bytes sha1 %s" % (len(orig), base["sha1"]))
     print("   parcheado %d bytes sha1 %s" % (len(nuevo), sha1(nuevo)))
-    base = dict(nombre="8.1", original=SHA1, tam_original=len(orig), parcheado=sha1(nuevo), tam_parcheado=len(nuevo),
-                ips=base64.b64encode(ips).decode())
-    datos = dict(BASE=json.dumps(base, indent=2), LISTA="%s: %d bytes, sha1 %s" % ("SofaRun 8.1", len(orig), SHA1))
+    return dict(nombre=base["nombre"], original=base["sha1"], tam_original=len(orig), parcheado=sha1(nuevo),
+                tam_parcheado=len(nuevo), ips=base64.b64encode(ips).decode(), fichero_ips=base["ips"])
+
+
+def main():
+    hechas = [hacer_base(b) for b in BASES]
+    por_sha = {h["original"]: h for h in hechas}
+    lista = "; ".join("SofaRun %s (%d bytes, sha1 %s)" % (h["nombre"], h["tam_original"], h["original"]) for h in hechas)
+    datos = dict(BASES=json.dumps(por_sha, indent=2), LISTA=lista)
     for plant, destino in (("aplicar.plantilla.py", "aplicar.py"), ("aplicar.plantilla.html", "aplicar.html")):
         with open(os.path.join(RAIZ, destino), "w", encoding="utf-8", newline="\n") as f:
             f.write(plantilla(plant, **datos))

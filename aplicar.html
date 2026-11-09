@@ -50,14 +50,26 @@
 </main>
 <script>
 "use strict";
-// el SR.COM original y el parcheado: { nombre, original (sha1), tam_original, parcheado (sha1), tam_parcheado, ips (base64) }
-const BASE = {
-  "nombre": "8.1",
-  "original": "2f13bb7303d4cc4f9c0a54c084907e320777be22",
-  "tam_original": 34929,
-  "parcheado": "c2f56896a09bf856ec21ae842752cb8925aede71",
-  "tam_parcheado": 36242,
-  "ips": "UEFUQ0gAC9IABMMWiwAADVgAA806igAOhgADzeWJAD1UAAPNxIoAXpUAApWOAF6eAAKVjgBeoQAClY4AXr4AApeOAIhxBSEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOHFOnGJtyAD/eXp5c33ieHV6SpyiXy1KBrdbvLdZvMpKSkpKSntW3KJGVRdAT8ACX63wCF0iRF1iTYgAT4A7bD95eERdIkGDX63KAUSIxMQ9xF0icn1xdXd5f3lOnGJtyhyKht9fLUoaykpKSkpKSLCiQEQAAnlzcNf0bftUjhU7VvCic3WWyJyiVRdEzYA7UvCiQvtsM3DXxFYA7ftUjgmEUgDzdZbIsSJIsaJEQACGSLIiRFAABkiyonNPovtW8SJzbRcGA3tW3KJIQAAInKJzbRc/eHd4dHB8SpRdMnF1eU67H3+UD4AIAE8MnGJIfKKBgleI1YjTiM6cYm3KAFOI3kSEO7h0cE67H3JhQ8MP5UPBgehDww/zQ8NQf8PEkY4EBRQfRAUIEsQE0+dEhRQ9cXl3eX95dXtW3KJerMoCSEAACJyic20XNH94d3h4cHx1SpVdMPWDA4ZzQUAMsyJIR19ftZBIcyJvsDtW8iJLgAOMc0FALfAKsiJIyMjfjLNiREEABleI1btU86JEQUAGV4jVu1T0IntW8aJDhrNBQDNkosRgAAOGsMFAD7/MtqJIQAAOiB9tygW3SrIiRFMjAYQDkDNBQC3wN1uE91mFHy1IBwq0Iki1okhAAAi2IkqzokGBMs8yx0Q+iLUiRgy6yrIia8Ofs0FALfAKsiJEQQAGRHWiQEEAO2wXiNWI34jy14oAxEAAO1T0olvJgAi1Ik6zIkGAe1b1okq2IkOc80FALfAIdaJBgQ0IAMjEPrdKsaJBhDFzU6MwcgRIADdGRDzKtSJKyLUiXy1IMQq0ol8tSCLyS4A3X4At8j+5Sge3X4L/g8oHuYIIBM62om3IA3d5eHN6owh24m+zGSNPv8y2om3yd1+AMt3KAbdfg0y24ndfg0h24m+IOPdfgDLdygT5h8o2P4VMNQy2onN2ow2AN1+AOYfKMUh2om+IL81fs3ajOshF40GDcXlTgYA3eXhCU4jfs3zjBIT4SPBEOr2AclvJgBNRCkJKSkJ7UvKiQnJBguvD4YjEPvJtyAYebfI/iA4F/5/2NbAOBAhJI2FbzABJH7JPCADeTzIPj/JAQMFBwkOEBIUFhgcHkFBQUFBQUFDRUVFRUlJSUlETk9PT09PeE9VVVVVWVRzYWFhYWFhYWNlZWVlaWlpaWRub29vb28vb3V1dXV5dHndfgD+Lsjd5eERtIkGCH7+ICgFEhMjEPbd5eEBCAAJfv4gKBA+LhITBgN+/iAoBRITIxD2rxLdfgvmECgCPn0y3IkqG318tcgrIt+JIQAAIt2J7VvdiSrfibftUtgq3YntW9+JGcs8yx0i4YnNHo4i44kRDQAZfv59OAT+gDgBr0c63Im4KAl4IdyJvjggGBUq44kRtIl+Txq5IAe3KCojExjzOAkq4YkjIt2JGKQq4Yl8tcgrIt+JGJhUXSkpKSnrKRntW1V0Gckq4YkpKSkpKSntW3KJGevVKsqJAQAAfrcoBCMDGPgqyol4sSg+eLcgF3n+QDASxe2wwT4/kSgkRz4gEhMQ+hgbxQEsAO2wBgM+LhITEPrBKsqJCQEQALftQu2w4RE/ABk2AcnhyUVPRg=="
+// sha1 del SR.COM original -> { nombre, original (sha1), tam_original, parcheado (sha1), tam_parcheado, ips (base64) }
+const BASES = {
+  "2f13bb7303d4cc4f9c0a54c084907e320777be22": {
+    "nombre": "8.1",
+    "original": "2f13bb7303d4cc4f9c0a54c084907e320777be22",
+    "tam_original": 34929,
+    "parcheado": "c2f56896a09bf856ec21ae842752cb8925aede71",
+    "tam_parcheado": 36242,
+    "ips": "UEFUQ0gAC9IABMMWiwAADVgAA806igAOhgADzeWJAD1UAAPNxIoAXpUAApWOAF6eAAKVjgBeoQAClY4AXr4AApeOAIhxBSEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOHFOnGJtyAD/eXp5c33ieHV6SpyiXy1KBrdbvLdZvMpKSkpKSntW3KJGVRdAT8ACX63wCF0iRF1iTYgAT4A7bD95eERdIkGDX63KAUSIxMQ9xF0icn1xdXd5f3lOnGJtyhyKht9fLUoaykpKSkpKSLCiQEQAAnlzcNf0bftUjhU7VvCic3WWyJyiVRdEzYA7UvCiQvtsM3DXxFYA7ftUjgmEUgDzdZbIsSJIsaJEQACGSLIiRFAABkiyonNPovtW8SJzbRcGA3tW3KJIQAAInKJzbRc/eHd4dHB8SpRdMnF1eU67H3+UD4AIAE8MnGJIfKKBgleI1YjTiM6cYm3KAFOI3kSEO7h0cE67H3JhQ8MP5UPBgehDww/zQ8NQf8PEkY4EBRQfRAUIEsQE0+dEhRQ9cXl3eX95dXtW3KJerMoCSEAACJyic20XNH94d3h4cHx1SpVdMPWDA4ZzQUAMsyJIR19ftZBIcyJvsDtW8iJLgAOMc0FALfAKsiJIyMjfjLNiREEABleI1btU86JEQUAGV4jVu1T0IntW8aJDhrNBQDNkosRgAAOGsMFAD7/MtqJIQAAOiB9tygW3SrIiRFMjAYQDkDNBQC3wN1uE91mFHy1IBwq0Iki1okhAAAi2IkqzokGBMs8yx0Q+iLUiRgy6yrIia8Ofs0FALfAKsiJEQQAGRHWiQEEAO2wXiNWI34jy14oAxEAAO1T0olvJgAi1Ik6zIkGAe1b1okq2IkOc80FALfAIdaJBgQ0IAMjEPrdKsaJBhDFzU6MwcgRIADdGRDzKtSJKyLUiXy1IMQq0ol8tSCLyS4A3X4At8j+5Sge3X4L/g8oHuYIIBM62om3IA3d5eHN6owh24m+zGSNPv8y2om3yd1+AMt3KAbdfg0y24ndfg0h24m+IOPdfgDLdygT5h8o2P4VMNQy2onN2ow2AN1+AOYfKMUh2om+IL81fs3ajOshF40GDcXlTgYA3eXhCU4jfs3zjBIT4SPBEOr2AclvJgBNRCkJKSkJ7UvKiQnJBguvD4YjEPvJtyAYebfI/iA4F/5/2NbAOBAhJI2FbzABJH7JPCADeTzIPj/JAQMFBwkOEBIUFhgcHkFBQUFBQUFDRUVFRUlJSUlETk9PT09PeE9VVVVVWVRzYWFhYWFhYWNlZWVlaWlpaWRub29vb28vb3V1dXV5dHndfgD+Lsjd5eERtIkGCH7+ICgFEhMjEPbd5eEBCAAJfv4gKBA+LhITBgN+/iAoBRITIxD2rxLdfgvmECgCPn0y3IkqG318tcgrIt+JIQAAIt2J7VvdiSrfibftUtgq3YntW9+JGcs8yx0i4YnNHo4i44kRDQAZfv59OAT+gDgBr0c63Im4KAl4IdyJvjggGBUq44kRtIl+Txq5IAe3KCojExjzOAkq4YkjIt2JGKQq4Yl8tcgrIt+JGJhUXSkpKSnrKRntW1V0Gckq4YkpKSkpKSntW3KJGevVKsqJAQAAfrcoBCMDGPgqyol4sSg+eLcgF3n+QDASxe2wwT4/kSgkRz4gEhMQ+hgbxQEsAO2wBgM+LhITEPrBKsqJCQEQALftQu2w4RE/ABk2AcnhyUVPRg==",
+    "fichero_ips": "SR_LFN.ips"
+  },
+  "2d95ca7d366f7ac87b299102e1b148692d934706": {
+    "nombre": "8.1 (2025-11)",
+    "original": "2d95ca7d366f7ac87b299102e1b148692d934706",
+    "tam_original": 35115,
+    "parcheado": "0b3ff3bec96d550ce4902ea3830c95ace5499199",
+    "tam_parcheado": 36428,
+    "ips": "UEFUQ0gAC9IABMPQiwAADVgAA830igAOhgADzZ+KAD1dAAPNfosAX08AAk+PAF9YAAJPjwBfWwACT48AX3gAAlGPAIkrBSEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOHFOiuKtyAD/eXp5c2xiuHV6Sosiny1KBrdbvLdZvMpKSkpKSntWyyKGVRdAT8ACX63wCEuihEvijYgAT4A7bD95eERLooGDX63KAUSIxMQ9xEuisn1xdXd5f3lOiuKtyhyKtV9fLUoaykpKSkpKSJ8igEQAAnlzX1g0bftUjhU7Vt8is2QXCIsilRdEzYA7Ut8igvtsM19YBFYA7ftUjgmEUgDzZBcIn6KIoCKEQACGSKCihFAABkihIrN+IvtW36KzW5dGA3tWyyKIQAAIiyKzW5d/eHd4dHB8SoLdcnF1eU6pn7+UD4AIAE8MiuKIayLBgleI1YjTiM6K4q3KAFOI3kSEO7h0cE6pn7JhQ8MP5UPBgehDww/zQ8NQf8PEkY4EBRQfRAUIEsQE0+dEhRQ9cXl3eX95dXtWyyKerMoCSEAACIsis1uXdH94d3h4cHx1SoPdcPWDA4ZzQUAMoaKIdd9ftZBIYaKvsDtW4KKLgAOMc0FALfAKoKKIyMjfjKHihEEABleI1btU4iKEQUAGV4jVu1TiortW4CKDhrNBQDNTIwRgAAOGsMFAD7/MpSKIQAAOtp9tygW3SqCihEGjQYQDkDNBQC3wN1uE91mFHy1IBwqiooikIohAAAikooqiIoGBMs8yx0Q+iKOihgy6yqCiq8Ofs0FALfAKoKKEQQAGRGQigEEAO2wXiNWI34jy14oAxEAAO1TjIpvJgAijoo6hooGAe1bkIoqkooOc80FALfAIZCKBgQ0IAMjEPrdKoCKBhDFzQiNwcgRIADdGRDzKo6KKyKOiny1IMQqjIp8tSCLyS4A3X4At8j+5Sge3X4L/g8oHuYIIBM6lIq3IA3d5eHNpI0hlYq+zB6OPv8ylIq3yd1+AMt3KAbdfg0ylYrdfg0hlYq+IOPdfgDLdygT5h8o2P4VMNQylIrNlI02AN1+AOYfKMUhlIq+IL81fs2Ujesh0Y0GDcXlTgYA3eXhCU4jfs2tjRIT4SPBEOr2AclvJgBNRCkJKSkJ7UuEignJBguvD4YjEPvJtyAYebfI/iA4F/5/2NbAOBAh3o2FbzABJH7JPCADeTzIPj/JAQMFBwkOEBIUFhgcHkFBQUFBQUFDRUVFRUlJSUlETk9PT09PeE9VVVVVWVRzYWFhYWFhYWNlZWVlaWlpaWRub29vb28vb3V1dXV5dHndfgD+Lsjd5eERbooGCH7+ICgFEhMjEPbd5eEBCAAJfv4gKBA+LhITBgN+/iAoBRITIxD2rxLdfgvmECgCPn0ylooq1X18tcgrIpmKIQAAIpeK7VuXiiqZirftUtgql4rtW5mKGcs8yx0im4rN2I4inYoRDQAZfv59OAT+gDgBr0c6loq4KAl4IZaKvjggGBUqnYoRbop+Txq5IAe3KCojExjzOAkqm4ojIpeKGKQqm4p8tcgrIpmKGJhUXSkpKSnrKRntWw91Gckqm4opKSkpKSntWyyKGevVKoSKAQAAfrcoBCMDGPgqhIp4sSg+eLcgF3n+QDASxe2wwT4/kSgkRz4gEhMQ+hgbxQEsAO2wBgM+LhITEPrBKoSKCQEQALftQu2w4RE/ABk2AcnhyUVPRg==",
+    "fichero_ips": "SR_LFN_2025-11.ips"
+  }
 };
 
 // ---- nucleo (sin DOM; lo prueba tests/probar.py con node) ----
@@ -89,8 +101,8 @@ function sha1(bytes) {
   return h.map(x => x.toString(16).padStart(8, "0")).join("");
 }
 
-function ipsBytes() {
-  const bin = atob(BASE.ips), out = new Uint8Array(bin.length);
+function ipsBytes(base) {
+  const bin = atob(base.ips), out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
@@ -115,14 +127,16 @@ function aplicarIps(datos, ips) {
   return out;
 }
 
-// { estado: "original" | "parcheado" | "otro", salida (Uint8Array | null), sha }
+// { estado: "original" | "parcheado" | "otro", salida (Uint8Array | null), sha, base }
 function procesar(datos) {
-  const sha = sha1(datos);
-  if (sha === BASE.parcheado) return { estado: "parcheado", salida: null, sha };
-  if (sha !== BASE.original) return { estado: "otro", salida: null, sha };
-  const salida = aplicarIps(datos, ipsBytes());
-  if (sha1(salida) !== BASE.parcheado || salida.length !== BASE.tam_parcheado) throw new Error("internal");
-  return { estado: "original", salida, sha };
+  const sha = sha1(datos), base = BASES[sha];
+  if (!base) {
+    const ya = Object.values(BASES).find(b => b.parcheado === sha) || null;
+    return { estado: ya ? "parcheado" : "otro", salida: null, sha, base: ya };
+  }
+  const salida = aplicarIps(datos, ipsBytes(base));
+  if (sha1(salida) !== base.parcheado || salida.length !== base.tam_parcheado) throw new Error("internal");
+  return { estado: "original", salida, sha, base };
 }
 
 // ---- pagina ----
@@ -130,23 +144,23 @@ if (typeof document !== "undefined") {
   const TXT = {
     es: {
       titulo: "Nombres largos para SofaRun",
-      sub: "Suelta el SR.COM original de SofaRun 8.1 y descarga el SR.COM con nombres largos en una columna. Todo ocurre en tu navegador: el fichero no se sube a ningún sitio.",
+      sub: "Suelta el SR.COM original de SofaRun (8.1) y descarga el SR.COM con nombres largos en una columna. Todo ocurre en tu navegador: el fichero no se sube a ningún sitio.",
       zona: "Suelta aquí tu SR.COM, o pulsa para elegirlo",
       pie: "Después copia el fichero resultante a la tarjeta como SR.COM, en la carpeta de SofaRun (junto a SR.INI). Necesita Nextor 2.1 o 3.0 y una pantalla de 80 columnas.",
-      version: "Versión admitida, sin tocar:",
-      ok: "Hecho", okMsg: "SofaRun 8.1: parche aplicado (%n bytes). Pulsa para descargar SR_LFN.COM.", descargar: "Descargar SR_LFN.COM",
-      ya: "Ya está parcheado", yaMsg: "Este SR.COM ya lleva el parche de nombres largos.",
-      mal: "No es el SR.COM original que conozco", malMsg: "Tu fichero tiene sha1 %s. El parche solo vale para SofaRun 8.1 sin tocar (abajo): no sirve otra versión ni un SR.COM ya modificado.",
+      version: "Versiones admitidas, sin tocar:",
+      ok: "Hecho", okMsg: "SofaRun %v: parche aplicado (%n bytes). Pulsa para descargar SR_LFN.COM.", descargar: "Descargar SR_LFN.COM",
+      ya: "Ya está parcheado", yaMsg: "Este SR.COM (SofaRun %v) ya lleva el parche de nombres largos.",
+      mal: "No es un SR.COM original que conozca", malMsg: "Tu fichero tiene sha1 %s. El parche solo vale para las versiones de abajo, sin tocar: no sirve otra versión ni un SR.COM ya modificado.",
     },
     en: {
       titulo: "Long file names for SofaRun",
-      sub: "Drop the original SofaRun 8.1 SR.COM and download the SR.COM with long file names in one column. Everything happens in your browser: the file is not uploaded anywhere.",
+      sub: "Drop the original SofaRun (8.1) SR.COM and download the SR.COM with long file names in one column. Everything happens in your browser: the file is not uploaded anywhere.",
       zona: "Drop your SR.COM here, or click to choose it",
       pie: "Then copy the result to the card as SR.COM, in the SofaRun folder (next to SR.INI). Needs Nextor 2.1 or 3.0 and an 80-column screen.",
-      version: "Supported version, untouched:",
-      ok: "Done", okMsg: "SofaRun 8.1: patch applied (%n bytes). Click to download SR_LFN.COM.", descargar: "Download SR_LFN.COM",
-      ya: "Already patched", yaMsg: "This SR.COM already has the long-name patch.",
-      mal: "Not the original SR.COM I know", malMsg: "Your file's sha1 is %s. The patch only fits SofaRun 8.1, untouched (below): another version or an already modified SR.COM will not do.",
+      version: "Supported versions, untouched:",
+      ok: "Done", okMsg: "SofaRun %v: patch applied (%n bytes). Click to download SR_LFN.COM.", descargar: "Download SR_LFN.COM",
+      ya: "Already patched", yaMsg: "This SR.COM (SofaRun %v) already has the long-name patch.",
+      mal: "Not an original SR.COM I know", malMsg: "Your file's sha1 is %s. The patch only fits the versions below, untouched: another version or an already modified SR.COM will not do.",
     },
   };
   const L = TXT[(navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en"];
@@ -156,10 +170,12 @@ if (typeof document !== "undefined") {
   document.getElementById("t-zona").textContent = L.zona;
   document.getElementById("t-pie").textContent = L.pie;
   document.getElementById("t-versiones").textContent = L.version;
-  const li = document.createElement("li"), c = document.createElement("code");
-  c.textContent = BASE.nombre + ": " + BASE.tam_original + " bytes, sha1 " + BASE.original;
-  li.append(c);
-  document.getElementById("lista-versiones").append(li);
+  for (const b of Object.values(BASES)) {
+    const li = document.createElement("li"), c = document.createElement("code");
+    c.textContent = "SofaRun " + b.nombre + ": " + b.tam_original + " bytes, sha1 " + b.original;
+    li.append(c);
+    document.getElementById("lista-versiones").append(li);
+  }
   const res = document.getElementById("resultado"), zona = document.getElementById("zona"),
         fich = document.getElementById("fichero");
 
@@ -174,7 +190,7 @@ if (typeof document !== "undefined") {
     const datos = new Uint8Array(await archivo.arrayBuffer());
     let r;
     try { r = procesar(datos); } catch (e) { return mostrar("mal", L.mal, "Internal error / Error interno"); }
-    if (r.estado === "parcheado") return mostrar("ok", L.ya, L.yaMsg);
+    if (r.estado === "parcheado") return mostrar("ok", L.ya, L.yaMsg.replace("%v", r.base.nombre));
     if (r.estado === "otro") return mostrar("mal", L.mal, L.malMsg.replace("%s", r.sha));
     const salida = r.salida, boton = document.createElement("button");
     boton.textContent = L.descargar;
@@ -185,7 +201,7 @@ if (typeof document !== "undefined") {
       document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     };
-    mostrar("ok", L.ok, L.okMsg.replace("%n", salida.length), boton);
+    mostrar("ok", L.ok, L.okMsg.replace("%v", r.base.nombre).replace("%n", salida.length), boton);
   }
 
   fich.addEventListener("change", () => fich.files[0] && procesarFichero(fich.files[0]));

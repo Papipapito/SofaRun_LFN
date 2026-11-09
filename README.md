@@ -1,6 +1,6 @@
 # SR_LFN — long file names for SofaRun (MSX)
 
-An unofficial patch that makes **SofaRun 8.1** (`SR.COM`, by Louthrax) show **long file names** (VFAT, the ones you see
+An unofficial patch that makes **SofaRun 8.1** (`SR.COM`, by Louthrax; both builds of it, see below) show **long file names** (VFAT, the ones you see
 in Windows) in a **single column**, instead of `METALG~1.ROM` in four narrow columns. [Versión en castellano](LEEME.md).
 
 ```
@@ -16,19 +16,27 @@ after:    Aleste 1 - Eleven Fighters (1988)(Compile).rom                        
 
 ## Apply it
 
-You need your own copy of the original `SR.COM` of SofaRun 8.1 (34,929 bytes, sha1
-`2f13bb7303d4cc4f9c0a54c084907e320777be22`). It is **not** included here. Pick any of these:
+You need your own copy of the original `SR.COM`. It is **not** included here. SofaRun 8.1 exists in two builds that
+both say "v8.1" inside; tell them apart by the size of `SR.COM`:
+
+| Build | `SR.COM` | sha1 | Result |
+| --- | --- | --- | --- |
+| 8.1 | 34,929 bytes | `2f13bb7303d4cc4f9c0a54c084907e320777be22` | 36,242 bytes, `c2f56896a09bf856ec21ae842752cb8925aede71` |
+| 8.1, November 2025 (the one in the zip on the SofaRun web page) | 35,115 bytes | `2d95ca7d366f7ac87b299102e1b148692d934706` | 36,428 bytes, `0b3ff3bec96d550ce4902ea3830c95ace5499199` |
+
+Pick any of these:
 
 1. **Web page, nothing to install:** open [the online patcher](https://papipapito.github.io/SofaRun_LFN/aplicar.html)
    (or the downloaded [`aplicar.html`](aplicar.html)) in a browser and drop your `SR.COM` on it. It runs in your
    browser; the file is not uploaded anywhere.
 2. **Python 3:** `python aplicar.py SR.COM` → writes `SR_LFN.COM` next to it.
-3. **Any IPS patcher** (Floating IPS, Lunar IPS…): apply [`SR_LFN.ips`](SR_LFN.ips) to `SR.COM`. IPS patchers do not check the
-   source file, so check the sha1 above first.
+3. **Any IPS patcher** (Floating IPS, Lunar IPS…): apply [`SR_LFN.ips`](SR_LFN.ips) (34,929 bytes) or
+   [`SR_LFN_2025-11.ips`](SR_LFN_2025-11.ips) (35,115 bytes) to `SR.COM`. IPS patchers do not check the source file,
+   so check the sha1 above first.
 
 Then copy the result to the card as `SR.COM`, in the SofaRun folder (next to `SR.INI`). `aplicar.py` and `aplicar.html`
-refuse any file that is not exactly the original 8.1 and check the sha1 of the result (36,242 bytes,
-`c2f56896a09bf856ec21ae842752cb8925aede71`).
+recognise the build by its sha1, refuse any file that is not exactly one of the originals above and check the sha1
+of the result.
 
 ## Requirements and limits
 
@@ -40,17 +48,19 @@ refuse any file that is not exactly the original 8.1 and check the sha1 of the r
 - Only ASCII: accented Latin letters show without the accent, anything else as `?`. The title of the Game menu still
   shows the 8.3 name. Sorting is the original one (by 8.3 name). Inside ZIP files nothing changes.
 - Entering a folder takes a little longer: the folder is read again to find the long names.
-- Tested **only in openMSX** (Philips NMS 8245, Sunrise IDE, Nextor 2.1.4, FAT16): lists of 25, 180 and 430 files, entering
-  and leaving folders, moving the cursor, the Game menu. Not tried on real hardware, with Nextor 3.0, with ZIP files or
-  with a real 40-column screen.
+- Tested **only in openMSX** (Philips NMS 8245, Sunrise IDE, Nextor 2.1.4, FAT16): with the first build, lists of 25,
+  180 and 430 files, entering and leaving folders, moving the cursor, the Game menu; with the November 2025 build, the
+  list of 25 files and entering and leaving a folder (its list, drawing and sorting code is the same, only the
+  addresses moved). Not tried on real hardware, with Nextor 3.0, with ZIP files or with a real 40-column screen.
 
 ## Rebuild and test
 
 The patch is hand-written Z80 (`src/srlfn.asm`) over the disassembly of the binary. With
-[pasmo](http://pasmo.speccy.org/) (or WSL on Windows) and the original in `original/SR.COM`:
+[pasmo](http://pasmo.speccy.org/) (or WSL on Windows) and the originals in `original/` (`SR.COM` for the first build,
+`SR_2025-11.COM` for the second):
 
 ```
-python tools/hacer_parche.py     # builds SR_LFN.ips, aplicar.py and aplicar.html
+python tools/hacer_parche.py     # builds the .ips files, aplicar.py and aplicar.html
 python tests/probar.py           # checks the three ways of applying it (node is optional)
 ```
 
